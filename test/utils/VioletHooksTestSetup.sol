@@ -30,14 +30,24 @@ contract VioletHooksTestSetup is Test, HookTest {
         token0.mint(compliantUser, tokenAmount);
         token1.mint(compliantUser, tokenAmount);
 
+        token0.mint(sanctionedUser, tokenAmount);
+        token1.mint(sanctionedUser, tokenAmount);
+
+        token0.mint(userWithMissingStatus, tokenAmount);
+        token1.mint(userWithMissingStatus, tokenAmount);
+
 
         console.log("compliant user: %s", compliantUser);
-        vm.prank(compliantUser);
+        vm.startPrank(compliantUser);
         token0.approve(address(swapRouter), tokenAmount);
-        vm.prank(compliantUser);
         token1.approve(address(swapRouter), tokenAmount);
 
+        token0.approve(address(modifyPositionRouter), tokenAmount);
+        token1.approve(address(modifyPositionRouter), tokenAmount);
 
+        token0.approve(address(donateRouter), tokenAmount);
+        token1.approve(address(donateRouter), tokenAmount);
+        vm.stopPrank();
     }
 
 }

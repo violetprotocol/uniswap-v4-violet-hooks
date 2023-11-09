@@ -7,7 +7,9 @@ import {IHooks} from "@uniswap/v4-core/contracts/interfaces/IHooks.sol";
 import {Hooks} from "@uniswap/v4-core/contracts/libraries/Hooks.sol";
 import {TickMath} from "@uniswap/v4-core/contracts/libraries/TickMath.sol";
 import {IPoolManager} from "@uniswap/v4-core/contracts/interfaces/IPoolManager.sol";
+import {PoolModifyPositionTest} from "@uniswap/v4-core/contracts/test/PoolModifyPositionTest.sol";
 import {PoolSwapTest} from "@uniswap/v4-core/contracts/test/PoolSwapTest.sol";
+import {PoolDonateTest} from "@uniswap/v4-core/contracts/test/PoolDonateTest.sol";
 import {PoolKey} from "@uniswap/v4-core/contracts/types/PoolKey.sol";
 import {PoolId, PoolIdLibrary} from "@uniswap/v4-core/contracts/types/PoolId.sol";
 import {Deployers} from "@uniswap/v4-core/test/foundry-tests/utils/Deployers.sol";
@@ -68,6 +70,7 @@ contract VioletHooksExampleTest is
         console.log("swapRouter address: ", address(swapRouter));
         violetHooks.updateSenderWhitelist(address(modifyPositionRouter), true);
         violetHooks.updateSenderWhitelist(address(swapRouter), true);
+        violetHooks.updateSenderWhitelist(address(donateRouter), true);
 
         // Create the pool
         poolKey = PoolKey(
@@ -107,22 +110,11 @@ contract VioletHooksExampleTest is
         // Provide liquidity to the pool
         modifyPositionRouter.modifyPosition(
             poolKey,
-            IPoolManager.ModifyPositionParams(-60, 60, 10 ether),
-            abi.encode(address(this))
-        );
-        modifyPositionRouter.modifyPosition(
-            poolKey,
-            IPoolManager.ModifyPositionParams(-120, 120, 10 ether),
-            abi.encode(address(this))
-        );
-        modifyPositionRouter.modifyPosition(
-            poolKey,
             IPoolManager.ModifyPositionParams(
                 TickMath.minUsableTick(60),
                 TickMath.maxUsableTick(60),
                 10 ether
-            ),
-            abi.encode(address(this))
+            )
         );
     }
 
@@ -142,6 +134,10 @@ contract VioletHooksExampleTest is
         assertEq(token0BalanceBefore, token0BalanceAfter);
         assertEq(token1BalanceBefore, token1BalanceAfter);
     }
+
+    // ---------------
+    //      SWAP
+    // ---------------
 
     function test_SwapFail_FromUnauthorizedSender() public {
         PoolSwapTest unauthorizedRouter = new PoolSwapTest(manager);
@@ -210,4 +206,147 @@ contract VioletHooksExampleTest is
         vm.expectRevert(UnauthorizedVioletIDStatus.selector);
         swap(poolKey, amount, zeroForOne);
     }
+
+    // --------------------------
+    //      MODIFY POSITION
+    // --------------------------
+
+    function test_ModifyPositionFail_FromUnauthorizedSender() public {
+        PoolModifyPositionTest unauthorizedPositionManager = new PoolModifyPositionTest(
+                IPoolManager(address(manager))
+            );
+
+        bytes4 selector = bytes4(keccak256("UnauthorizedSender(address)"));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                selector,
+                address(unauthorizedPositionManager)
+            )
+        );
+        // Test swapping from an unauthorized positionManager which does not enforce
+        // passing msg.sender as part of `hookData`
+        unauthorizedPositionManager.modifyPosition(
+            poolKey,
+            IPoolManager.ModifyPositionParams(-60, 60, 10 ether),
+            abi.encode(address(compliantUser))
+        );
+    }
+
+    function test_ModifyPositionPass_WithCorrectStatuses()
+        public
+        asCompliantUser
+    {
+        uint256 token0BalanceBefore = token0.balanceOf(compliantUser);
+        uint256 token1BalanceBefore = token1.balanceOf(compliantUser);
+
+        modifyPositionRouter.modifyPosition(
+            poolKey,
+            IPoolManager.ModifyPositionParams(-60, 60, 10 ether)
+        );
+
+        uint256 token0BalanceAfter = token0.balanceOf(compliantUser);
+        uint256 token1BalanceAfter = token1.balanceOf(compliantUser);
+
+        assertTrue(token0BalanceAfter < token0BalanceBefore);
+        assertTrue(token1BalanceAfter < token1BalanceBefore);
+    }
+
+    function test_ModifyPositionFail_WithMissingStatus()
+        public
+        checkBalancesNoChanges(userWithMissingStatus)
+    {
+        vm.prank(userWithMissingStatus);
+        vm.expectRevert(MissingVioletIDStatus.selector);
+        modifyPositionRouter.modifyPosition(
+            poolKey,
+            IPoolManager.ModifyPositionParams(-60, 60, 10 ether)
+        );
+    }
+
+    function test_ModifyPositionFail_sanctionedUser()
+        public
+        checkBalancesNoChanges(sanctionedUser)
+    {
+        vm.prank(sanctionedUser);
+        vm.expectRevert(UnauthorizedVioletIDStatus.selector);
+        modifyPositionRouter.modifyPosition(
+            poolKey,
+            IPoolManager.ModifyPositionParams(-60, 60, 10 ether)
+        );
+    }
+
+    // ----------------------
+    //         DONATE
+    // ----------------------
+
+    function test_DonateFail_FromUnauthorizedSender() public {
+        PoolDonateTest unauthorizedDonateRouter= new PoolDonateTest(
+                IPoolManager(address(manager))
+            );
+
+        bytes4 selector = bytes4(keccak256("UnauthorizedSender(address)"));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                selector,
+                address(unauthorizedDonateRouter)
+            )
+        );
+        // Test swapping from an unauthorized positionManager which does not enforce
+        // passing msg.sender as part of `hookData`
+        unauthorizedDonateRouter.donate(
+            poolKey,
+            1 ether,
+            1 ether,
+            abi.encode(address(compliantUser))
+        );
+    }
+
+    function test_DonatePass_WithCorrectStatuses()
+        public
+        asCompliantUser
+    {
+        uint256 token0BalanceBefore = token0.balanceOf(compliantUser);
+        uint256 token1BalanceBefore = token1.balanceOf(compliantUser);
+
+        donateRouter.donate(
+            poolKey,
+            1 ether,
+            1 ether
+        );
+
+        uint256 token0BalanceAfter = token0.balanceOf(compliantUser);
+        uint256 token1BalanceAfter = token1.balanceOf(compliantUser);
+
+        assertTrue(token0BalanceAfter < token0BalanceBefore);
+        assertTrue(token1BalanceAfter < token1BalanceBefore);
+    }
+
+    function test_DonateFail_WithMissingStatus()
+        public
+        checkBalancesNoChanges(userWithMissingStatus)
+    {
+        vm.prank(userWithMissingStatus);
+        vm.expectRevert(MissingVioletIDStatus.selector);
+        donateRouter.donate(
+            poolKey,
+            1 ether,
+            1 ether
+        );
+    }
+
+    function test_DonateFail_sanctionedUser()
+        public
+        checkBalancesNoChanges(sanctionedUser)
+    {
+        vm.prank(sanctionedUser);
+        vm.expectRevert(UnauthorizedVioletIDStatus.selector);
+        donateRouter.donate(
+            poolKey,
+            1 ether,
+            1 ether
+        );
+    }
+
+
+
 }

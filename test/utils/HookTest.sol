@@ -6,15 +6,14 @@ import "forge-std/Test.sol";
 import {PoolManager} from "@uniswap/v4-core/contracts/PoolManager.sol";
 import {IPoolManager} from "@uniswap/v4-core/contracts/interfaces/IPoolManager.sol";
 import {PoolKey} from "@uniswap/v4-core/contracts/types/PoolKey.sol";
-import {PoolModifyPositionTest} from "@uniswap/v4-core/contracts/test/PoolModifyPositionTest.sol";
-import {PoolSwapTest} from "@uniswap/v4-core/contracts/test/PoolSwapTest.sol";
-import {PoolDonateTest} from "@uniswap/v4-core/contracts/test/PoolDonateTest.sol";
 
 import {TestERC20} from "@uniswap/v4-core/contracts/test/TestERC20.sol";
 import {TickMath} from "@uniswap/v4-core/contracts/libraries/TickMath.sol";
 
 import {IVioletID} from "@violetprotocol/violetid/contracts/IVioletID.sol";
-import {PoolSwapTestWithOrigin} from "./PoolSwapTestWithOrigin.sol";
+import {PoolModifyPositionTestWithOrigin} from "./entrypoints/PoolModifyPositionTestWithOrigin.sol";
+import {PoolSwapTestWithOrigin} from "./entrypoints/PoolSwapTestWithOrigin.sol";
+import {PoolDonateTestWithOrigin} from "./entrypoints/PoolDonateTestWithOrigin.sol";
 
 // TO REMOVE
 import "forge-std/console.sol";
@@ -24,9 +23,9 @@ import "forge-std/console.sol";
 /// @dev Minimal initialization. Inheriting contract should set up pools and provision liquidity
 contract HookTest is Test {
     PoolManager manager;
-    PoolModifyPositionTest modifyPositionRouter;
+    PoolModifyPositionTestWithOrigin modifyPositionRouter;
     PoolSwapTestWithOrigin swapRouter;
-    PoolDonateTest donateRouter;
+    PoolDonateTestWithOrigin donateRouter;
     TestERC20 token0;
     TestERC20 token1;
 
@@ -50,11 +49,11 @@ contract HookTest is Test {
         manager = new PoolManager(500000);
 
         // Helpers for interacting with the pool
-        modifyPositionRouter = new PoolModifyPositionTest(
+        modifyPositionRouter = new PoolModifyPositionTestWithOrigin(
             IPoolManager(address(manager))
         );
         swapRouter = new PoolSwapTestWithOrigin(IPoolManager(address(manager)));
-        donateRouter = new PoolDonateTest(IPoolManager(address(manager)));
+        donateRouter = new PoolDonateTestWithOrigin(IPoolManager(address(manager)));
 
         // Approve for liquidity provision
         token0.approve(address(modifyPositionRouter), amount);
