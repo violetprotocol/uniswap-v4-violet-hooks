@@ -9,6 +9,9 @@ import {IPoolManager} from "@uniswap/v4-core/contracts/interfaces/IPoolManager.s
 import {BalanceDelta} from "@uniswap/v4-core/contracts/types/BalanceDelta.sol";
 import {PoolKey} from "@uniswap/v4-core/contracts/types/PoolKey.sol";
 
+// Similar to v4-core/contracts/test/PoolModifyPositionTest.sol.
+// The only change compared to the original contract is that hookData is
+// set to be the msg.sender's address.
 contract PoolModifyPositionTestWithOrigin is ILockCallback {
     using CurrencyLibrary for Currency;
 
@@ -25,7 +28,6 @@ contract PoolModifyPositionTestWithOrigin is ILockCallback {
         bytes hookData;
     }
 
-    // The only change compared to the original is here, hookData set to be the msg.sender's address
     function modifyPosition(PoolKey memory key, IPoolManager.ModifyPositionParams memory params)
         external
         payable

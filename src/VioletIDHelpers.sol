@@ -6,6 +6,10 @@ import { IVioletID } from "@violetprotocol/violetid/contracts/IVioletID.sol";
 error MissingVioletIDStatus();
 error UnauthorizedVioletIDStatus();
 
+/**
+* @notice Small contract providing helpers to check statuses of addresses
+* in the VioletID registry.
+*/
 contract VioletIDHelpers {
     IVioletID violetID;
 

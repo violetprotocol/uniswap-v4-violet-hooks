@@ -40,10 +40,17 @@ contract VioletHooksExampleTest is
     uint256 blockedStatusCombinationId = 4;
 
     function setUp() public {
-        // creates the pool manager, test tokens, and other utility routers
+        // Creates the pool manager, test tokens, and other utility routers
         VioletHooksTestSetup.initTestEnv();
 
-        // Deploy the hook to an address with the correct flags
+        // Grant the required statuses to this contract for initial seeding
+        violetID.grantStatuses(address(this), requiredStatusCombinationId);
+        // Grant the required statuses to the compliantUser
+        violetID.grantStatuses(compliantUser, requiredStatusCombinationId);
+        // Grant all required statuses but also the "sanctioned status" to the sanctionedUser
+        violetID.grantStatuses(sanctionedUser, 38);
+
+        // Flags indicating the hooks to call on our VioletHooksExample contract
         uint160 flags = uint160(
             Hooks.BEFORE_SWAP_FLAG |
                 Hooks.BEFORE_MODIFY_POSITION_FLAG |
@@ -67,7 +74,7 @@ contract VioletHooksExampleTest is
             "VioletHooksExampleTest: hook address mismatch"
         );
 
-        console.log("swapRouter address: ", address(swapRouter));
+        // Whitelist the routers in our hooks contracts
         violetHooks.updateSenderWhitelist(address(modifyPositionRouter), true);
         violetHooks.updateSenderWhitelist(address(swapRouter), true);
         violetHooks.updateSenderWhitelist(address(donateRouter), true);
@@ -91,23 +98,10 @@ contract VioletHooksExampleTest is
             poolId,
             blockedStatusCombinationId
         );
-
-        // Grant the required statuses to this contract for initial seeding
-        violetID.grantStatuses(address(this), requiredStatusCombinationId);
-        // Grant the required statuses to default sender for tests
-        violetID.grantStatuses(compliantUser, requiredStatusCombinationId);
-        console.log("VioletHooksExampleTest address: ", address(this));
-        // Grant all required statuses but also the "sanctioned status"
-        violetID.grantStatuses(sanctionedUser, 38);
-
-        require(
-            violetID.hasStatuses(address(this), requiredStatusCombinationId) ==
-                true,
-            "Statuses not granted properly"
-        );
+        // Initialize the pool in the PoolManager
         manager.initialize(poolKey, SQRT_RATIO_1_1, ZERO_BYTES);
 
-        // Provide liquidity to the pool
+        // Provide initial liquidity to the pool
         modifyPositionRouter.modifyPosition(
             poolKey,
             IPoolManager.ModifyPositionParams(
@@ -167,7 +161,6 @@ contract VioletHooksExampleTest is
     }
 
     function test_SwapPass_WithCorrectStatuses() public asCompliantUser {
-        // Perform a test swap //
         int256 amount = 100;
         bool zeroForOne = true;
 
@@ -263,7 +256,7 @@ contract VioletHooksExampleTest is
         );
     }
 
-    function test_ModifyPositionFail_sanctionedUser()
+    function test_ModifyPositionFail_SanctionedUser()
         public
         checkBalancesNoChanges(sanctionedUser)
     {
@@ -334,7 +327,7 @@ contract VioletHooksExampleTest is
         );
     }
 
-    function test_DonateFail_sanctionedUser()
+    function test_DonateFail_SanctionedUser()
         public
         checkBalancesNoChanges(sanctionedUser)
     {
@@ -346,7 +339,4 @@ contract VioletHooksExampleTest is
             1 ether
         );
     }
-
-
-
 }

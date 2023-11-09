@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import {BaseHook} from "v4-periphery/BaseHook.sol";
-import "forge-std/console.sol";
 import {Hooks} from "@uniswap/v4-core/contracts/libraries/Hooks.sol";
 import {IPoolManager} from "@uniswap/v4-core/contracts/interfaces/IPoolManager.sol";
 import {PoolKey} from "@uniswap/v4-core/contracts/types/PoolKey.sol";
@@ -15,15 +14,16 @@ error UnauthorizedSender(address sender);
 contract VioletHooksExample is BaseHook, VioletIDHelpers {
     using PoolIdLibrary for PoolKey;
 
-    // Whitelists the senders (Swap Router, Position Manager contract...)
-    // This is important since we want to make sure that the sender's contract is properly
-    // forwarding the address of the end user who initiated the transaction.
-    mapping(address => bool) public authorizedSender;
-
     mapping(PoolId => uint256 statusCombinationId)
         public requiredVioletIdStatusCombination;
     mapping(PoolId => uint256 statusCombinationId)
         public blockedVioletIdStatusCombination;
+
+    // Whitelist of senders (Swap Router, Position Manager contract...)
+    // This is important since we want to make sure that the sender's contract is properly
+    // forwarding the address of the end user who initiated the transaction.
+    // See README.md for more details.
+    mapping(address => bool) public authorizedSender;
 
     constructor(
         IPoolManager _poolManager,
@@ -122,6 +122,8 @@ contract VioletHooksExample is BaseHook, VioletIDHelpers {
         return BaseHook.beforeDonate.selector;
     }
 
+    // ↓↓↓↓↓ ADMIN FUNCTIONS ↓↓↓↓↓
+    // Obviously these functions would normally be permissioned.
     function setRequiredVioletIdStatuses(
         PoolId poolId,
         uint256 statusCombinationId

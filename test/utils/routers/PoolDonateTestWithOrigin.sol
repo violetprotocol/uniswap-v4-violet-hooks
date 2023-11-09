@@ -10,6 +10,9 @@ import {IPoolManager} from "@uniswap/v4-core/contracts/interfaces/IPoolManager.s
 import {PoolKey} from "@uniswap/v4-core/contracts/types/PoolKey.sol";
 import {BalanceDelta} from "@uniswap/v4-core/contracts/types/BalanceDelta.sol";
 
+// Similar to v4-core/contracts/test/PoolDonateTest.sol
+// The only change compared to the original contract is that hookData is
+// set to be the msg.sender's address.
 contract PoolDonateTestWithOrigin is ILockCallback {
     using CurrencyLibrary for Currency;
 

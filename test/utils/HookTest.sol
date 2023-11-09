@@ -11,13 +11,9 @@ import {TestERC20} from "@uniswap/v4-core/contracts/test/TestERC20.sol";
 import {TickMath} from "@uniswap/v4-core/contracts/libraries/TickMath.sol";
 
 import {IVioletID} from "@violetprotocol/violetid/contracts/IVioletID.sol";
-import {PoolModifyPositionTestWithOrigin} from "./entrypoints/PoolModifyPositionTestWithOrigin.sol";
-import {PoolSwapTestWithOrigin} from "./entrypoints/PoolSwapTestWithOrigin.sol";
-import {PoolDonateTestWithOrigin} from "./entrypoints/PoolDonateTestWithOrigin.sol";
-
-// TO REMOVE
-import "forge-std/console.sol";
-
+import {PoolModifyPositionTestWithOrigin} from "./routers/PoolModifyPositionTestWithOrigin.sol";
+import {PoolSwapTestWithOrigin} from "./routers/PoolSwapTestWithOrigin.sol";
+import {PoolDonateTestWithOrigin} from "./routers/PoolDonateTestWithOrigin.sol";
 
 /// @notice Contract to initialize some test helpers
 /// @dev Minimal initialization. Inheriting contract should set up pools and provision liquidity
@@ -58,10 +54,6 @@ contract HookTest is Test {
         // Approve for liquidity provision
         token0.approve(address(modifyPositionRouter), amount);
         token1.approve(address(modifyPositionRouter), amount);
-
-        // Approve for swapping
-        token0.approve(address(swapRouter), amount);
-        token1.approve(address(swapRouter), amount);
     }
 
     function swap(
@@ -77,7 +69,8 @@ contract HookTest is Test {
 
         PoolSwapTestWithOrigin.TestSettings memory testSettings = PoolSwapTestWithOrigin
             .TestSettings({withdrawTokens: true, settleUsingTransfer: true});
-        console.log("sender in swap: %s", msg.sender);
+
+        // Execute swap
         swapRouter.swap(key, params, testSettings);
     }
 }
