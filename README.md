@@ -8,6 +8,8 @@ As shown in [`VioletHooksExample`](src/VioletHooksExample.sol), specific checks 
 - Only addresses with specific status(es) can interact with a pool
 - And/or only addresses without specific status(es) can interact with a pool
 
+When a hook is called, the Hooks contract in turn calls the VioletID registry and compare the VioletID statuses of the user against the requirements set for the pool involved in the transaction.
+
 ### Accessing the user's address from the hooks
 
 Although the first field received as parameter in a V4 hook is an address called `sender`, this address might not correspond to the user's address, the one that ultimately should be checked against the VioletID Registry. The reason being that the PoolManager will call the hook contract passing `msg.sender` (see [here](https://github.com/Uniswap/v4-core/blob/5fb47b1d659a4ca91b6077a94d56221e806d7c82/src/PoolManager.sol#L251) for a swap for example).

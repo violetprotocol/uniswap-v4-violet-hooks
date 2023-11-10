@@ -11,6 +11,8 @@ error UnauthorizedVioletIDStatus();
  * in the VioletID registry.
  */
 contract VioletIDHelpers {
+    // Stores the address of the VioletID registry
+    // on the current chain.
     IVioletID violetID;
 
     constructor(IVioletID violetID_) {
