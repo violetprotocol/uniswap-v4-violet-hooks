@@ -1,29 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { IVioletID } from "@violetprotocol/violetid/contracts/IVioletID.sol";
+import {IVioletID} from "@violetprotocol/violetid/contracts/IVioletID.sol";
 
 error MissingVioletIDStatus();
 error UnauthorizedVioletIDStatus();
 
 /**
-* @notice Small contract providing helpers to check statuses of addresses
-* in the VioletID registry.
-*/
+ * @notice Small contract providing helpers to check statuses of addresses
+ * in the VioletID registry.
+ */
 contract VioletIDHelpers {
     IVioletID violetID;
 
-    constructor(
-        IVioletID violetID_
-    ) {
+    constructor(IVioletID violetID_) {
         violetID = IVioletID(violetID_);
     }
 
-    function checkForRequiredVioletIDStatuses(address sender, uint256 statusCombinationId) internal view {
-        if(!violetID.hasStatuses(sender, statusCombinationId)) revert MissingVioletIDStatus();
+    function checkForRequiredVioletIDStatuses(
+        address userAddress,
+        uint256 statusCombinationId
+    ) internal view {
+        if (!violetID.hasStatuses(userAddress, statusCombinationId))
+            revert MissingVioletIDStatus();
     }
 
-    function checkForBlockedVioletIdStatuses(address sender, uint256 statusCombinationId) internal view {
-      if(violetID.hasStatuses(sender, statusCombinationId)) revert UnauthorizedVioletIDStatus();
+    function checkForBlockedVioletIdStatuses(
+        address userAddress,
+        uint256 statusCombinationId
+    ) internal view {
+        if (violetID.hasStatuses(userAddress, statusCombinationId))
+            revert UnauthorizedVioletIDStatus();
     }
 }

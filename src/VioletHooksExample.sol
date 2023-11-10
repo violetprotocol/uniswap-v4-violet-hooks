@@ -14,24 +14,24 @@ error UnauthorizedSender(address sender);
 contract VioletHooksExample is BaseHook, VioletIDHelpers {
     using PoolIdLibrary for PoolKey;
 
-   /**
-    * @dev Mapping from Pools to the required/blocked statusCombinationIds.
-    * A statusCombinationId represents the combination of multiple status IDs
-    * on the VioletID Registry. It is used to check if an address holds
-    * multiple statuses all at once.
-    */
+    /**
+     * @dev Mapping from Pools to the required/blocked statusCombinationIds.
+     * A statusCombinationId represents the combination of multiple status IDs
+     * on the VioletID Registry. It is used to check if an address holds
+     * multiple statuses all at once.
+     */
     mapping(PoolId => uint256 statusCombinationId)
         public requiredVioletIdStatusCombination;
     mapping(PoolId => uint256 statusCombinationId)
         public blockedVioletIdStatusCombination;
 
-   /**
-    * @dev Whitelist of senders (Swap Router, Position Manager contract...).
-    * This is important since we want to make sure that the sender's contract is properly
-    * forwarding the address of the end user who initiated the transaction.
-    * The assumption here is that users are not calling the PoolManager themselves directly.
-    * See README.md for more details.
-    */
+    /**
+     * @dev Whitelist of senders (Swap Router, Position Manager contract...).
+     * This is important since we want to make sure that the sender's contract is properly
+     * forwarding the address of the end user who initiated the transaction.
+     * The assumption here is that users are not calling the PoolManager themselves directly.
+     * See README.md for more details.
+     */
     mapping(address => bool) public authorizedSender;
 
     constructor(
@@ -62,17 +62,23 @@ contract VioletHooksExample is BaseHook, VioletIDHelpers {
      * @dev A status combination ID is a single number representing multiple statuses.
      */
     modifier verifyComplianceOfUser(address user, PoolKey calldata key) {
+        PoolId poolId = key.toId();
+
         // Checks that `user` has the statuses required to interact with the specified pool
         uint256 requiredStatusCombinationId = requiredVioletIdStatusCombination[
-            key.toId()
+            poolId
         ];
-        checkForRequiredVioletIDStatuses(user, requiredStatusCombinationId);
+        if (requiredStatusCombinationId != 0) {
+            checkForRequiredVioletIDStatuses(user, requiredStatusCombinationId);
+        }
 
         // Checks that `user` does NOT have the statuses barred from interacting with the specified pool
         uint256 blockedStatusCombinationId = blockedVioletIdStatusCombination[
-            key.toId()
+            poolId
         ];
-        checkForBlockedVioletIdStatuses(user, blockedStatusCombinationId);
+        if (blockedStatusCombinationId != 0) {
+            checkForBlockedVioletIdStatuses(user, blockedStatusCombinationId);
+        }
 
         _;
     }
