@@ -14,15 +14,23 @@ error UnauthorizedSender(address sender);
 contract VioletHooksExample is BaseHook, VioletIDHelpers {
     using PoolIdLibrary for PoolKey;
 
+   /**
+    * @dev Mapping from Pools to the required/blocked statusCombinationIds.
+    * A statusCombinationId represents the combination of multiple status IDs
+    * on the VioletID Registry. It is used to check if an address holds
+    * multiple statuses all at once.
+    */
     mapping(PoolId => uint256 statusCombinationId)
         public requiredVioletIdStatusCombination;
     mapping(PoolId => uint256 statusCombinationId)
         public blockedVioletIdStatusCombination;
 
-    // Whitelist of senders (Swap Router, Position Manager contract...)
-    // This is important since we want to make sure that the sender's contract is properly
-    // forwarding the address of the end user who initiated the transaction.
-    // See README.md for more details.
+   /**
+    * @dev Whitelist of senders (Swap Router, Position Manager contract...)
+    * This is important since we want to make sure that the sender's contract is properly
+    * forwarding the address of the end user who initiated the transaction.
+    * See README.md for more details.
+    */
     mapping(address => bool) public authorizedSender;
 
     constructor(
