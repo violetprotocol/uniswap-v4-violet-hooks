@@ -26,9 +26,10 @@ contract VioletHooksExample is BaseHook, VioletIDHelpers {
         public blockedVioletIdStatusCombination;
 
    /**
-    * @dev Whitelist of senders (Swap Router, Position Manager contract...)
+    * @dev Whitelist of senders (Swap Router, Position Manager contract...).
     * This is important since we want to make sure that the sender's contract is properly
     * forwarding the address of the end user who initiated the transaction.
+    * The assumption here is that users are not calling the PoolManager themselves directly.
     * See README.md for more details.
     */
     mapping(address => bool) public authorizedSender;
