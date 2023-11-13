@@ -16,7 +16,8 @@ Although the first field received as parameter in a V4 hook is an address called
 <br/>However, just like in V3, it is likely that the address calling the `PoolManager` is not the end user but likely another contract such as a `SwapRouter` which sits in between.
 In order to get the end users address then, the tests uses an approach passing it as `hookData`.
 
-`hookData` is arbitrary calldata that can be passed along when calling the `PoolManager`, therefore in order to guarantee a correct identity check, it shifts the responsibility to the router contract to ensure that the end user's address initiating the interaction with a pool is correctly set as part of `hookData`. This is done in [`test/utils/routers`](test/utils/routers). And to prevent a router contract which would not do this from using a gated pool, the Hooks contract example here also contains logic to whitelist router contracts.
+`hookData` is arbitrary calldata that can be passed along when calling the `PoolManager`, therefore in order to guarantee a correct identity check, it shifts the responsibility to the router contract to ensure that the end user's address initiating the interaction with a pool is correctly set as part of `hookData`. This is done in [`test/utils/routers`](test/utils/routers).
+<br/>If a router contract doesn't correctly set the end user's address in hookData, but for example a hardcoded address of a fully compliant entity instead, this would circumvent the checks defined in the hooks - they will always pass regardless of the address which initiated the transaction. Therefore, the Hooks contract example here (`VioletHooksExample`) also contains logic to whitelist router contracts (received as sender in hooks).
 
 
 ---
