@@ -6,20 +6,22 @@ import "forge-std/Test.sol";
 import {PoolManager} from "@uniswap/v4-core/contracts/PoolManager.sol";
 import {IPoolManager} from "@uniswap/v4-core/contracts/interfaces/IPoolManager.sol";
 import {PoolKey} from "@uniswap/v4-core/contracts/types/PoolKey.sol";
-import {PoolModifyPositionTest} from "@uniswap/v4-core/contracts/test/PoolModifyPositionTest.sol";
-import {PoolSwapTest} from "@uniswap/v4-core/contracts/test/PoolSwapTest.sol";
-import {PoolDonateTest} from "@uniswap/v4-core/contracts/test/PoolDonateTest.sol";
 
 import {TestERC20} from "@uniswap/v4-core/contracts/test/TestERC20.sol";
 import {TickMath} from "@uniswap/v4-core/contracts/libraries/TickMath.sol";
+
+import {IVioletID} from "@violetprotocol/violetid/contracts/IVioletID.sol";
+import {PoolModifyPositionTestWithOrigin} from "./routers/PoolModifyPositionTestWithOrigin.sol";
+import {PoolSwapTestWithOrigin} from "./routers/PoolSwapTestWithOrigin.sol";
+import {PoolDonateTestWithOrigin} from "./routers/PoolDonateTestWithOrigin.sol";
 
 /// @notice Contract to initialize some test helpers
 /// @dev Minimal initialization. Inheriting contract should set up pools and provision liquidity
 contract HookTest is Test {
     PoolManager manager;
-    PoolModifyPositionTest modifyPositionRouter;
-    PoolSwapTest swapRouter;
-    PoolDonateTest donateRouter;
+    PoolModifyPositionTestWithOrigin modifyPositionRouter;
+    PoolSwapTestWithOrigin swapRouter;
+    PoolDonateTestWithOrigin donateRouter;
     TestERC20 token0;
     TestERC20 token1;
 
@@ -43,29 +45,32 @@ contract HookTest is Test {
         manager = new PoolManager(500000);
 
         // Helpers for interacting with the pool
-        modifyPositionRouter = new PoolModifyPositionTest(IPoolManager(address(manager)));
-        swapRouter = new PoolSwapTest(IPoolManager(address(manager)));
-        donateRouter = new PoolDonateTest(IPoolManager(address(manager)));
+        modifyPositionRouter = new PoolModifyPositionTestWithOrigin(
+            IPoolManager(address(manager))
+        );
+        swapRouter = new PoolSwapTestWithOrigin(IPoolManager(address(manager)));
+        donateRouter = new PoolDonateTestWithOrigin(IPoolManager(address(manager)));
 
         // Approve for liquidity provision
         token0.approve(address(modifyPositionRouter), amount);
         token1.approve(address(modifyPositionRouter), amount);
-
-        // Approve for swapping
-        token0.approve(address(swapRouter), amount);
-        token1.approve(address(swapRouter), amount);
     }
 
-    function swap(PoolKey memory key, int256 amountSpecified, bool zeroForOne, bytes memory hookData) internal {
+    function swap(
+        PoolKey memory key,
+        int256 amountSpecified,
+        bool zeroForOne
+    ) internal {
         IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
             zeroForOne: zeroForOne,
             amountSpecified: amountSpecified,
             sqrtPriceLimitX96: zeroForOne ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT // unlimited impact
         });
 
-        PoolSwapTest.TestSettings memory testSettings =
-            PoolSwapTest.TestSettings({withdrawTokens: true, settleUsingTransfer: true});
+        PoolSwapTestWithOrigin.TestSettings memory testSettings = PoolSwapTestWithOrigin
+            .TestSettings({withdrawTokens: true, settleUsingTransfer: true});
 
-        swapRouter.swap(key, params, testSettings, hookData);
+        // Execute swap
+        swapRouter.swap(key, params, testSettings);
     }
 }
