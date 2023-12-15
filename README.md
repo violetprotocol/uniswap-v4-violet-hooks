@@ -1,8 +1,10 @@
 # Uniswap V4 Violet Hooks
 ## **Uniswap v4 Hooks using the VioletID registry 🦄🟣**
 
-This repository introduces an example showing how Violet's Identity and Compliance system can be used to add a permission layer on top of Uniswap V4 pools, using Hooks.
-It relies on the VioletID registry, which contains a mapping from an address to the attributes/statuses associated with the entity registered with Violet controlling that address.
+This repository introduces an example showing how Violet's Identity and Compliance system can be used to add a permission layer on top of a Uniswap V4 pool, using Hooks.
+It relies on the VioletID registry, which contains a mapping from an address to the attributes/statuses associated with the entity registered with Violet controlling that address. To learn more about it, please see [this page](https://docs.violet.co/for-developers/core-concepts/violetid-registry) from Violet's docs.
+
+The VioletID registry is live on Ethereum Mainnet at [0xfFcDa323597A90af8F7A0eCBE4ef14e9b30e4a9e](https://etherscan.io/address/0xfFcDa323597A90af8F7A0eCBE4ef14e9b30e4a9e).
 
 As shown in [`VioletHooksExample`](src/VioletHooksExample.sol), specific checks can be set for each pool such that:
 - Only addresses with specific status(es) can interact with a pool
